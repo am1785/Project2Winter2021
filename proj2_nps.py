@@ -1,6 +1,6 @@
 #################################
-##### Name:
-##### Uniqname:
+##### Name: Allen Mo
+##### Uniqname: allenmo
 #################################
 
 from bs4 import BeautifulSoup
@@ -46,8 +46,13 @@ def build_state_url_dict():
         key is a state name and value is the url
         e.g. {'michigan':'https://www.nps.gov/state/mi/index.htm', ...}
     '''
-    pass
-       
+    page = requests.get('https://www.nps.gov/index.htm')
+    soup = BeautifulSoup(page.text, 'html.parser')
+    state_url_soup = soup.find(class_='dropdown-menu SearchBar-keywordSearch').find_all('a')
+    state_url_dict = {}
+    for i in state_url_soup:
+        state_url_dict[i.text] = "https://www.nps.gov" + i.get('href')
+    return(state_url_dict)
 
 def get_site_instance(site_url):
     '''Make an instances from a national site URL.
@@ -98,4 +103,4 @@ def get_nearby_places(site_object):
     
 
 if __name__ == "__main__":
-    pass
+    build_state_url_dict()
