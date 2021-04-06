@@ -179,10 +179,10 @@ def print_nearby_places(mapquest_obj):
     '''
 
     for idx, place in enumerate(mapquest_obj['searchResults']):
-        name = place['fields']["name"] if place['fields']["name"] is not None else "no name"
-        category = place['fields']["group_sic_code_name"] if place['fields']["group_sic_code_name"] is not None else "no category"
-        address = place['fields']["address"] if place['fields']["address"] is not None else "no address"
-        city = place['fields']["city"] if place['fields']["city"] is not None else "no city"
+        name = place['fields']["name"] if (place['fields']["name"]) else "no name"
+        category = place['fields']["group_sic_code_name"] if (place['fields']["group_sic_code_name"]) else "no category"
+        address = place['fields']["address"] if (place['fields']["address"]) else "no address"
+        city = place['fields']["city"] if (place['fields']["city"]) else "no city"
         print(f"{[idx+1]} {name} ({category}): {address}, {city}")
 
 
