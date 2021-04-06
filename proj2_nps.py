@@ -17,7 +17,7 @@ class NationalSite:
     category: string
         the category of a national site (e.g. 'National Park', '')
         some sites have blank category.
-    
+
     name: string
         the name of a national site (e.g. 'Isle Royale')
 
@@ -30,7 +30,28 @@ class NationalSite:
     phone: string
         the phone of a national site (e.g. '(616) 319-7906', '307-344-7381')
     '''
-    pass
+    def __init__(self, category="no category", name="no name", address="no address",
+    zipcode="no zip", phone="no phone"):
+        self.category = category
+        self.name = name
+        self.address = address
+        self.zipcode = zipcode
+        self.phone = phone
+
+    def info(self):
+        ''' Returns short summary of an instance of NationalSite
+
+        Prarmeters
+        ----------
+        None
+
+        Returns
+        -------
+        string
+            a string following the convention specified below:
+            <name> (<category>): <address> <zip>
+        '''
+        return f"{self.name} ({self.category}): {self.address} {self.zipcode}"
 
 
 def build_state_url_dict():
@@ -52,7 +73,7 @@ def build_state_url_dict():
     state_url_dict = {}
     for i in state_url_soup:
         state_url_dict[i.text] = "https://www.nps.gov" + i.get('href')
-    return(state_url_dict)
+    return (state_url_dict)
 
 def get_site_instance(site_url):
     '''Make an instances from a national site URL.
@@ -67,8 +88,18 @@ def get_site_instance(site_url):
     instance
         a national site instance
     '''
-    pass
+    page = requests.get(site_url)
+    soup = BeautifulSoup(page.text, 'html.parser')
 
+    name = soup.find('a',{'class':"Hero-title"}).text
+    category = soup.find('span', {'class': 'Hero-designation'}).text
+    address_local = soup.find('span', {'itemprop': "addressLocality"}).text
+    address_region = soup.find('span', {'itemprop': "addressRegion"}).text
+    address = address_local + ', ' + address_region
+    zipcode = soup.find('span', {'itemprop': "postalCode"}).text[:5]
+    phone = soup.find('span', {'itemprop': "telephone"}).text
+    site = NationalSite(category= category, name=name, address=address, zipcode=zipcode, phone=phone)
+    return site
 
 def get_sites_for_state(state_url):
     '''Make a list of national site instances from a state URL.
@@ -103,4 +134,4 @@ def get_nearby_places(site_object):
     
 
 if __name__ == "__main__":
-    build_state_url_dict()
+    print(get_site_instance("https://www.nps.gov/yell/index.htm").info())
