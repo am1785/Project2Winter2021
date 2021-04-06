@@ -103,18 +103,30 @@ def get_site_instance(site_url):
 
 def get_sites_for_state(state_url):
     '''Make a list of national site instances from a state URL.
-    
+
     Parameters
     ----------
     state_url: string
         The URL for a state page in nps.gov
-    
+
     Returns
     -------
     list
         a list of national site instances
     '''
-    pass
+    page = requests.get(state_url)
+    soup = BeautifulSoup(page.text, 'html.parser')
+    parks_soup = soup.find('ul', {'id': 'list_parks'}).find_all('div', {"class": "col-md-9 col-sm-9 col-xs-12 table-cell list_left"})
+
+    site_urls = []
+    for park in parks_soup:
+        site_urls.append("https://www.nps.gov" + park.find('a').get('href'))
+
+    national_sites = []
+    for url in site_urls:
+        national_sites.append(get_site_instance(url))
+    return national_sites
+
 
 
 def get_nearby_places(site_object):
@@ -134,4 +146,7 @@ def get_nearby_places(site_object):
     
 
 if __name__ == "__main__":
-    print(get_site_instance("https://www.nps.gov/yell/index.htm").info())
+    #print(get_site_instance("https://www.nps.gov/yell/index.htm").info())
+    az_sites = get_sites_for_state('https://www.nps.gov/state/az/index.htm')
+    for i in az_sites:
+        print(i.info())
