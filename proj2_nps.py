@@ -142,11 +142,44 @@ def get_nearby_places(site_object):
     dict
         a converted API return from MapQuest API
     '''
-    pass
-    
+    base_url = "http://www.mapquestapi.com/search/v2/radius"
+    params = {"key": secrets.API_KEY, "origin": site_object.zipcode, "radius": 10,
+    "maxMatches": 10, "ambiguities": "ignore", "outFormat": "json"}
+    response = requests.get(base_url, params=params)
+    return response.json()
+
+
+def print_nearby_places(mapquest_obj):
+    '''Format the 10 nearby places return by the API as a list of strings
+    following the convention of: <name> (<category>): <street address>, <city name>
+
+    Parameters
+    ----------
+    mapquest_obj: dict
+        dictionary representation of MapQuest API's returned JSON object
+
+    Returns
+    -------
+    list
+        a list of strings describing the nearby places
+    '''
+    places = []
+    #print(mapquest_obj['searchResults'])
+    for place in mapquest_obj['searchResults']:
+        name = place['fields']["name"] if place['fields']["name"] is not None else "no name"
+        category = place['fields']["group_sic_code_name"] if place['fields']["group_sic_code_name"] is not None else "no category"
+        address = place['fields']["address"] if place['fields']["address"] is not None else "no address"
+        city = place['fields']["city"] if place['fields']["city"] is not None else "no city"
+        description = f"{name} ({category}): {address}, {city}"
+        places.append(description)
+    return places
+
+
 
 if __name__ == "__main__":
     #print(get_site_instance("https://www.nps.gov/yell/index.htm").info())
     az_sites = get_sites_for_state('https://www.nps.gov/state/az/index.htm')
-    for i in az_sites:
-        print(i.info())
+#    for i in az_sites:
+#        print(i.info())
+    #print(get_nearby_places(az_sites[0]))
+    print(print_nearby_places(get_nearby_places(az_sites[0])))
