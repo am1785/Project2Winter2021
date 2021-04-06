@@ -72,7 +72,7 @@ def build_state_url_dict():
     state_url_soup = soup.find(class_='dropdown-menu SearchBar-keywordSearch').find_all('a')
     state_url_dict = {}
     for i in state_url_soup:
-        state_url_dict[i.text] = "https://www.nps.gov" + i.get('href')
+        state_url_dict[i.text.lower()] = "https://www.nps.gov" + i.get('href')
     return (state_url_dict)
 
 def get_site_instance(site_url):
@@ -121,13 +121,27 @@ def get_sites_for_state(state_url):
     site_urls = []
     for park in parks_soup:
         site_urls.append("https://www.nps.gov" + park.find('a').get('href'))
+        print("FETCHING")
 
     national_sites = []
     for url in site_urls:
         national_sites.append(get_site_instance(url))
     return national_sites
 
+def print_national_sites(national_sites):
+    '''Format and print a list of national sites
 
+    Parameters
+    ----------
+    national_sites: list
+        a list of NationalSite objects to display
+
+    Returns
+    -------
+    None
+    '''
+    for idx, site in enumerate(national_sites):
+        print(f"[{idx + 1}] {site.info()}")
 
 def get_nearby_places(site_object):
     '''Obtain API data from MapQuest API.
@@ -151,7 +165,8 @@ def get_nearby_places(site_object):
 
 def print_nearby_places(mapquest_obj):
     '''Format the 10 nearby places return by the API as a list of strings
-    following the convention of: <name> (<category>): <street address>, <city name>
+    following the convention of: <name> (<category>): <street address>, <city name>,
+    and print it.
 
     Parameters
     ----------
@@ -160,26 +175,81 @@ def print_nearby_places(mapquest_obj):
 
     Returns
     -------
-    list
-        a list of strings describing the nearby places
+    None
     '''
-    places = []
-    #print(mapquest_obj['searchResults'])
-    for place in mapquest_obj['searchResults']:
+
+    for idx, place in enumerate(mapquest_obj['searchResults']):
         name = place['fields']["name"] if place['fields']["name"] is not None else "no name"
         category = place['fields']["group_sic_code_name"] if place['fields']["group_sic_code_name"] is not None else "no category"
         address = place['fields']["address"] if place['fields']["address"] is not None else "no address"
         city = place['fields']["city"] if place['fields']["city"] is not None else "no city"
-        description = f"{name} ({category}): {address}, {city}"
-        places.append(description)
-    return places
+        print(f"{[idx+1]} {name} ({category}): {address}, {city}")
 
 
 
 if __name__ == "__main__":
-    #print(get_site_instance("https://www.nps.gov/yell/index.htm").info())
-    az_sites = get_sites_for_state('https://www.nps.gov/state/az/index.htm')
+
+    #az_sites = get_sites_for_state('https://www.nps.gov/state/az/index.htm')
 #    for i in az_sites:
 #        print(i.info())
     #print(get_nearby_places(az_sites[0]))
-    print(print_nearby_places(get_nearby_places(az_sites[0])))
+    #print(print_nearby_places(get_nearby_places(az_sites[0])))
+    res = ""
+
+    us_states = {
+    'Alabama': 'AL','Alaska': 'AK','American Samoa': 'AS','Arizona': 'AZ',
+    'Arkansas': 'AR','California': 'CA','Colorado': 'CO','Connecticut': 'CT',
+    'Delaware': 'DE','District of Columbia': 'DC','Florida': 'FL','Georgia': 'GA',
+    'Guam': 'GU','Hawaii': 'HI','Idaho': 'ID','Illinois': 'IL','Indiana': 'IN',
+    'Iowa': 'IA','Kansas': 'KS','Kentucky': 'KY','Louisiana': 'LA','Maine': 'ME',
+    'Maryland': 'MD','Massachusetts': 'MA','Michigan': 'MI','Minnesota': 'MN',
+    'Mississippi': 'MS','Missouri': 'MO','Montana': 'MT','Nebraska': 'NE','Nevada': 'NV',
+    'New Hampshire': 'NH','New Jersey': 'NJ','New Mexico': 'NM','New York': 'NY',
+    'North Carolina': 'NC','North Dakota': 'ND','Northern Mariana Islands':'MP',
+    'Ohio': 'OH','Oklahoma': 'OK','Oregon': 'OR','Pennsylvania': 'PA','Puerto Rico': 'PR',
+    'Rhode Island': 'RI','South Carolina': 'SC','South Dakota': 'SD','Tennessee': 'TN',
+    'Texas': 'TX','Utah': 'UT','Vermont': 'VT','Virgin Islands': 'VI','Virginia': 'VA',
+    'Washington': 'WA','West Virginia': 'WV','Wisconsin': 'WI','Wyoming': 'WY'
+    }
+    us_states = dict((k.lower(), v.lower()) for k,v in us_states.items())
+
+    while res.lower().strip() != "exit":
+        res = input('Enter a State Name: (e.g. Michigan or michigan)\n')
+        if res.lower().strip() == 'exit':
+            break
+        while us_states.get(res.lower()) is None:
+            print("That is not a state, try entering a state name like `michigan`! (type `exit` to quit)")
+            res = input('Enter a State Name: ')
+            if res.lower().strip() == 'exit':
+                break
+        if res.lower().strip() == 'exit':
+            break
+        print(f"\nListing the National Parks available for ({res})")
+        print('-----------------------------------------')
+        state_sites = get_sites_for_state(f"https://www.nps.gov/{res.lower()}/index.htm")
+        print_national_sites(state_sites)
+        print("-----------------------------------------")
+        print("Type `back` to return to state selection, `exit` to exit program")
+        res = input("\nTo view a site's nearby facilities, enter the number (e.g. 5) that corresponds to it!\n")
+        if res.lower().strip() == 'back':
+            continue
+        if res.lower().strip() == 'exit':
+            break
+        while res.isnumeric() is False or int(res) > len(state_sites):
+            print('\nInvalid input, please enter a number that is within the range of national sites displayed above!')
+            print('`back` to return to state selection, `exit` to exit')
+            res = input('Enter a number: ')
+            if res.lower().strip() == 'back' or res.lower().strip() == 'exit':
+                break
+        if res.lower().strip() == 'back':
+            continue
+        if res.lower().strip() == 'exit':
+            break
+
+        print(f"Finding nearby places for {state_sites[int(res)-1].name}")
+        print('-----------------------------------------')
+        nearby_places = get_nearby_places(state_sites[int(res)-1])
+        print_nearby_places(nearby_places)
+        print('-----------------------------------------')
+
+    print("End of program, bye-bye!")
